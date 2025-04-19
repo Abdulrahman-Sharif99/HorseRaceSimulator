@@ -45,6 +45,10 @@ public class AddHorseTab extends JPanel {
         addHorseButton = new JButton("Add Horse");
         startRaceButton = new JButton("Start Race");
 
+        // ❌ Disabled until race is adjusted
+        addHorseButton.setEnabled(false);
+        startRaceButton.setEnabled(false);
+
         formPanel.add(new JLabel("Horse Name:"));
         formPanel.add(horseNameField);
 
@@ -133,5 +137,11 @@ public class AddHorseTab extends JPanel {
 
     public void setOnRaceStarted(BiConsumer<RacePanel, Consumer<Runnable>> callback) {
         this.onRaceStarted = callback;
+    }
+
+    // ✅ Enable/Disable buttons depending on race adjustment
+    public void setRaceAdjusted(boolean adjusted) {
+        addHorseButton.setEnabled(adjusted);
+        startRaceButton.setEnabled(adjusted);
     }
 }

@@ -29,6 +29,7 @@ public class Gui extends JFrame {
 
             addHorseTab.setRace(race);
             addHorseTab.setHorseStatsMap(horseStatsMap);
+            addHorseTab.setRaceAdjusted(true); // ✅ Enable buttons when race is adjusted
             statsTab.setHorseStatsMap(horseStatsMap);
 
             JOptionPane.showMessageDialog(this, "Race adjusted! You can now add horses.");
@@ -42,11 +43,11 @@ public class Gui extends JFrame {
                 JOptionPane.showMessageDialog(this, "Race is already in progress!");
                 return;
             }
-            
+
             if (raceWindow != null) {
                 raceWindow.dispose();
             }
-            
+
             isRaceInProgress = true;
 
             raceWindow = new JFrame("🏁 Race In Progress");
@@ -59,13 +60,13 @@ public class Gui extends JFrame {
             new Thread(() -> {
                 long start = System.currentTimeMillis();
                 race.startRace(racePanel::repaint);
-                
+
                 try {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     Thread.currentThread().interrupt();
                 }
-                
+
                 SwingUtilities.invokeLater(() -> {
                     long end = System.currentTimeMillis();
                     double timeInSec = (end - start) / 1000.0;
@@ -79,11 +80,11 @@ public class Gui extends JFrame {
                             else if (h.hasFallen()) h.fall();
 
                             horseStatsMap.get(h).add(new RaceResult(
-                                timeInSec, 
-                                h == race.getWinner(), 
-                                h.hasFallen(), 
-                                speed, 
-                                shape, 
+                                timeInSec,
+                                h == race.getWinner(),
+                                h.hasFallen(),
+                                speed,
+                                shape,
                                 weather
                             ));
                         }
@@ -92,7 +93,7 @@ public class Gui extends JFrame {
                     String msg = race.getWinner() != null
                             ? "🏆 Winner: " + race.getWinner().getName()
                             : "😢 All horses have fallen!";
-                    
+
                     JOptionPane.showMessageDialog(this, msg);
                     raceWindow.dispose();
                     isRaceInProgress = false;
