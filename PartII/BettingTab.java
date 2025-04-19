@@ -106,6 +106,18 @@ public class BettingTab extends JPanel {
         updateOdds(); // Refresh odds after list is updated
     }
 
+    public void refreshHorseList() {
+        horseComboBox.removeAllItems();
+        if (race != null) {
+            for (Horse h : race.getLanes()) {
+                if (h != null) {
+                    horseComboBox.addItem(h.getName());
+                }
+            }
+        }
+    }
+    
+
     private void updateOdds() {
         String selectedName = (String) horseComboBox.getSelectedItem();
         if (selectedName != null && horseStatsMap != null) {

@@ -28,7 +28,7 @@ public class Gui extends JFrame {
 
         // Set up tabbed pane with larger minimum size
         tabbedPane.setMinimumSize(new Dimension(700, 500));
-        
+
         adjustRaceTab.setOnRaceAdjusted((newRace, trackDetails) -> {
             this.race = newRace;
             race.setTrackShape(trackDetails[0]);
@@ -38,11 +38,17 @@ public class Gui extends JFrame {
             statsTab.setHorseStatsMap(horseStatsMap);
             bettingTab.setRace(race);
             bettingTab.setHorseStatsMap(horseStatsMap);
+            addHorseTab.setRaceAdjusted(true);
             JOptionPane.showMessageDialog(this, "Race adjusted! You can now add horses.");
             statsTab.updateStats(race);
         });
+        
 
-        addHorseTab.setOnHorseAdded(() -> statsTab.updateStats(race));
+        addHorseTab.setOnHorseAdded(() -> {
+            statsTab.updateStats(race);
+            bettingTab.refreshHorseList(); // ✅ Update betting options
+        });
+        
         addHorseTab.setOnRaceStarted((racePanel, onFinished) -> {
             if (!bettingTab.hasPlacedBet()) {
                 JOptionPane.showMessageDialog(this, "You must place a bet before starting the race!");
@@ -67,25 +73,56 @@ public class Gui extends JFrame {
             JOptionPane.showMessageDialog(this, "A race is already in progress!");
             return;
         }
-
+    
         isRaceInProgress = true;
         raceWindow = new JFrame("Race in Progress");
-        raceWindow.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        raceWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Prevent closing during race
         raceWindow.setLayout(new BorderLayout());
         raceWindow.add(racePanel, BorderLayout.CENTER);
         raceWindow.setSize(800, 600);
         raceWindow.setLocationRelativeTo(null);
         raceWindow.setVisible(true);
+    
+        // Create a new race instance
+        Race race = new Race(1000, 5); // Example race length and number of lanes (adjust as needed)
+    
+        // Add horses to the race (use real horse objects here)
+        race.addHorse(selectedHorse, 1);
+        // Add other horses...
+    
+        // Start the race simulation in a separate thread
+        new Thread(() -> {
+            try {
+                // Run race simulation
+                race.startRace(() -> {
+                    // After each progress update, notify the GUI to repaint the race panel
+                    SwingUtilities.invokeLater(() -> {
+                        racePanel.repaint();
+                    });
+                });
+    
+                // After the race is complete, invoke the onFinished callback
+                SwingUtilities.invokeLater(() -> {
+                    isRaceInProgress = false;
+                    raceWindow.dispose();
+                    JOptionPane.showMessageDialog(this, "Race finished! Check the stats tab for results.");
+                    // Update the stats tab with the race results
+                    statsTab.updateStats(race);
+                    // Call the onFinished callback after the race ends
+                    onFinished.accept(() -> {
+                        // This is where you can handle any actions after the race finishes (e.g., update bets)
+                        System.out.println("Race finished, bet results to be processed.");
+                    });
+                });
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }    
 
-        onFinished.accept(() -> {
-            isRaceInProgress = false;
-            raceWindow.dispose();
-            JOptionPane.showMessageDialog(this, "Race finished! Check the stats tab for results.");
-            statsTab.updateStats(race);
-        });
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(Gui::new);
     }
-
-    // ... rest of the Gui class remains unchanged ...
 }
 
 

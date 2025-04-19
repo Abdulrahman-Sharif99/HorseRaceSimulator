@@ -33,14 +33,16 @@ public class Race {
     public void startRace(Runnable onRaceProgress) {
         boolean finished = false;
     
+        // Reset the race: move all horses back to the starting position
         for (Horse horse : lanes) {
             if (horse != null) {
                 horse.goBackToStart();
             }
         }
-        printRace();
+        printRace();  // Initial race state
     
         while (!finished) {
+            // Move each horse based on race conditions
             for (Horse horse : lanes) {
                 if (horse != null) {
                     moveHorseWithConditions(horse);
@@ -50,34 +52,38 @@ public class Race {
             // Notify GUI to repaint after each progress update
             onRaceProgress.run();
     
+            // Print race progress to console (for debugging purposes)
             printRace();
     
+            // Check if any horse has won the race
             Horse winner = getWinner();
             if (winner != null) {
                 System.out.println("And the winner is ... " + winner.getName());
                 finished = true;
             }
     
+            // Check if all horses have fallen
             if (allHorsesFallen()) {
                 System.out.println("No Horse was able to finish the race!");
                 finished = true;
             }
     
             try {
-                TimeUnit.MILLISECONDS.sleep(100);
-            } catch (Exception e) {
-                System.out.println("Error in sleep: " + e.getMessage());
+                // Sleep to simulate time between updates, controlling the speed of the race
+                TimeUnit.MILLISECONDS.sleep(100);  // Adjust the sleep time as needed
+            } catch (InterruptedException e) {
+                e.printStackTrace();
             }
         }
     
+        // After the race is finished, print the winner or a message about fallen horses
         Horse winner = getWinner();
         if (winner != null) {
             System.out.println("\n🏆 Winner: " + winner.getName() + "!");
         } else {
             System.out.println("\n😢 All horses have fallen. No winner.");
         }
-    }
-
+    } 
 
     public void moveHorseWithConditions(Horse horse) {
         if (horse.hasFallen()) return;
