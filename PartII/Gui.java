@@ -21,62 +21,34 @@ public class Gui extends JFrame {
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
         setLayout(new BorderLayout());
 
-        // Tabs
         JTabbedPane tabbedPane = new JTabbedPane();
         AdjustRaceTab adjustRaceTab = new AdjustRaceTab();
         AddHorseTab addHorseTab = new AddHorseTab();
         statsTab = new StatsTab();
         bettingTab = new BettingTab();
 
-        // Handle race adjustment
         adjustRaceTab.setOnRaceAdjusted((BiConsumer<Race, String[]>) (newRace, trackDetails) -> {
             this.race = newRace;
             race.setTrackShape(trackDetails[0]);
             race.setWeatherCondition(trackDetails[1]);
-
-            // Distribute shared race & stats data
             addHorseTab.setRace(race);
             addHorseTab.setHorseStatsMap(horseStatsMap);
             statsTab.setHorseStatsMap(horseStatsMap);
             bettingTab.setRace(race);
             bettingTab.setHorseStatsMap(horseStatsMap);
-
             JOptionPane.showMessageDialog(this, "Race adjusted! You can now add horses.");
-
-            // Refresh BettingTab
-            bettingTab.revalidate();
-            bettingTab.repaint();
-
             statsTab.updateStats(race);
         });
 
-        // Handle horse added
-        addHorseTab.setOnHorseAdded(() -> {
-            // Add each horse to stats map if not already present
-            for (Horse horse : race.getLanes()) {
-                if (horse != null && !horseStatsMap.containsKey(horse)) {
-                    horseStatsMap.put(horse, new ArrayList<>());
-                }
-            }
-
-            bettingTab.setHorseStatsMap(horseStatsMap);
-            bettingTab.revalidate();
-            bettingTab.repaint();
-
-            statsTab.updateStats(race);
-        });
-
-        // Handle race start
+        addHorseTab.setOnHorseAdded(() -> statsTab.updateStats(race));
         addHorseTab.setOnRaceStarted((racePanel, onFinished) -> {
             if (!bettingTab.hasPlacedBet()) {
                 JOptionPane.showMessageDialog(this, "You must place a bet before starting the race!");
                 return;
             }
-
             startRace(racePanel, onFinished, bettingTab.getSelectedHorseForBet(), bettingTab.getTotalBetAmount());
         });
 
-        // Add all tabs
         tabbedPane.addTab("Adjust Race", adjustRaceTab);
         tabbedPane.addTab("Add Horse", addHorseTab);
         tabbedPane.addTab("Stats", statsTab);
@@ -93,65 +65,54 @@ public class Gui extends JFrame {
             JOptionPane.showMessageDialog(this, "Race is already in progress!");
             return;
         }
-
         if (raceWindow != null) {
             raceWindow.dispose();
         }
-
         isRaceInProgress = true;
-
         raceWindow = new JFrame("🏁 Race In Progress");
         raceWindow.add(racePanel);
         raceWindow.setSize(900, 300);
         raceWindow.setLocationRelativeTo(this);
         raceWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         raceWindow.setVisible(true);
-
         new Thread(() -> {
             long start = System.currentTimeMillis();
             race.startRace(racePanel::repaint);
-
             try {
                 Thread.sleep(1000);
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
             }
-
             SwingUtilities.invokeLater(() -> {
                 long end = System.currentTimeMillis();
                 double timeInSec = (end - start) / 1000.0;
                 double speed = race.getRaceLength() / timeInSec;
                 String shape = race.getTrackShape();
                 String weather = race.getWeatherCondition();
-
                 for (Horse h : race.getLanes()) {
                     if (h != null) {
                         if (h == race.getWinner()) h.increaseConfidence();
                         else if (h.hasFallen()) h.fall();
-
-                        horseStatsMap.get(h).add(new RaceResult(
-                            timeInSec,
-                            h == race.getWinner(),
-                            h.hasFallen(),
-                            speed,
-                            shape,
+                        horseStatsMap.computeIfAbsent(h, k -> new ArrayList<>()).add(new RaceResult(
+                            timeInSec, 
+                            h == race.getWinner(), 
+                            h.hasFallen(), 
+                            speed, 
+                            shape, 
                             weather
                         ));
                     }
                 }
-
                 String msg = race.getWinner() != null
                         ? "🏆 Winner: " + race.getWinner().getName()
                         : "😢 All horses have fallen!";
                 boolean winBet = race.getWinner() != null && race.getWinner().equals(selectedHorse);
                 double payout = winBet ? totalBetAmount * 2 : 0;
                 msg += "\nBet Result: " + (winBet ? "You won £" + payout : "You lost your bet.");
-
                 JOptionPane.showMessageDialog(this, msg);
                 raceWindow.dispose();
                 isRaceInProgress = false;
                 statsTab.updateStats(race);
-
                 if (onFinished != null) {
                     onFinished.accept(() -> {});
                 }
@@ -163,6 +124,7 @@ public class Gui extends JFrame {
         SwingUtilities.invokeLater(Gui::new);
     }
 }
+
 
 // RaceResult class
 class RaceResult {
