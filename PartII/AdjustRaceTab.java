@@ -26,7 +26,6 @@ public class AdjustRaceTab extends JPanel {
         weatherConditionComboBox = new JComboBox<>(new String[]{"Wet", "Dry", "Sunny"});
         trackShapeComboBox = new JComboBox<>(new String[]{"Oval", "Figure-eight", "Straight"});
 
-
         adjustRaceButton = new JButton("Adjust Race");
 
         add(new JLabel("Race Length:"));
@@ -60,9 +59,4 @@ public class AdjustRaceTab extends JPanel {
     public void setOnRaceAdjusted(BiConsumer<Race, String[]> callback) {
         this.onRaceAdjusted = callback;
     }
-
-    public void setOnRaceAdjusted(Object callback) {
-        throw new UnsupportedOperationException("Unimplemented method 'setOnRaceAdjusted'");
-    }
 }
-
