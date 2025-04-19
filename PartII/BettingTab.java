@@ -3,23 +3,54 @@ package PartII;
 import PartI.*;
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 import java.util.Map;
 
 public class BettingTab extends JPanel {
+
     private JComboBox<String> horseComboBox;
     private JTextField betAmountField;
     private JLabel oddsLabel;
     private JButton placeBetButton;
+
     private Map<Horse, List<RaceResult>> horseStatsMap;
-    private Race race;
+    private Race currentRace;
+    private Horse selectedHorse;
+
     private double totalBetAmount = 0;
-    private Horse selectedHorseForBet;
 
     public BettingTab() {
         setLayout(new BorderLayout());
         setBorder(BorderFactory.createTitledBorder("Place Your Bet"));
+        initializeUI();
+        attachEventListeners();
+    }
 
+    public void setRace(Race race) {
+        this.currentRace = race;
+        populateHorseComboBox();
+    }
+
+    public void setHorseStatsMap(Map<Horse, List<RaceResult>> statsMap) {
+        this.horseStatsMap = statsMap;
+        populateHorseComboBox();
+    }
+
+    public boolean hasPlacedBet() {
+        return totalBetAmount > 0;
+    }
+
+    public double getTotalBetAmount() {
+        return totalBetAmount;
+    }
+
+    public Horse getSelectedHorseForBet() {
+        return selectedHorse;
+    }
+
+    private void initializeUI() {
         JPanel formPanel = new JPanel(new GridLayout(0, 2, 5, 5));
+
         horseComboBox = new JComboBox<>();
         betAmountField = new JTextField();
         oddsLabel = new JLabel("Odds: N/A");
@@ -35,85 +66,74 @@ public class BettingTab extends JPanel {
         formPanel.add(placeBetButton);
 
         add(formPanel, BorderLayout.CENTER);
+    }
 
-        // Update odds when a horse is selected
+    private void attachEventListeners() {
         horseComboBox.addActionListener(e -> updateOdds());
 
-        // Handle bet placement
         placeBetButton.addActionListener(e -> {
-            if (selectedHorseForBet == null) {
-                JOptionPane.showMessageDialog(this, "Please select a horse.");
+            if (selectedHorse == null) {
+                showMessage("Please select a horse.");
                 return;
             }
+
+            String input = betAmountField.getText().trim();
             try {
-                double betAmount = Double.parseDouble(betAmountField.getText());
-                if (betAmount <= 0) {
-                    JOptionPane.showMessageDialog(this, "Bet amount must be positive.");
+                double amount = Double.parseDouble(input);
+                if (amount <= 0) {
+                    showMessage("Bet amount must be positive.");
                     return;
                 }
-                totalBetAmount += betAmount;
-                JOptionPane.showMessageDialog(this, "Bet placed on " + selectedHorseForBet.getName() + " for £" + betAmount);
+                totalBetAmount += amount;
+                showMessage("Bet placed on " + selectedHorse.getName() + " for £" + amount);
                 betAmountField.setText("");
             } catch (NumberFormatException ex) {
-                JOptionPane.showMessageDialog(this, "Invalid bet amount. Please enter a valid number.");
+                showMessage("Invalid bet amount. Please enter a valid number.");
             }
         });
     }
 
-    public void setRace(Race race) {
-        this.race = race;
-        updateHorses();
-    }
-
-    public void setHorseStatsMap(Map<Horse, List<RaceResult>> horseStatsMap) {
-        this.horseStatsMap = horseStatsMap;
-    }
-
-    private void updateHorses() {
+    private void populateHorseComboBox() {
         horseComboBox.removeAllItems();
-        if (race != null && horseStatsMap != null) {
-            for (Horse horse : race.getLanes()) {
-                if (horse != null) {
-                    horseComboBox.addItem(horse.getName());
-                }
+        selectedHorse = null;
+        oddsLabel.setText("Odds: N/A");
+
+        if (currentRace == null || horseStatsMap == null) return;
+
+        for (Horse horse : currentRace.getLanes()) {
+            if (horse != null && horseStatsMap.containsKey(horse)) {
+                horseComboBox.addItem(horse.getName());
             }
         }
     }
 
     private void updateOdds() {
-        String selectedHorseName = (String) horseComboBox.getSelectedItem();
-        if (selectedHorseName != null && horseStatsMap != null) {
-            for (Map.Entry<Horse, List<RaceResult>> entry : horseStatsMap.entrySet()) {
-                Horse horse = entry.getKey();
-                if (horse.getName().equals(selectedHorseName)) {
-                    double odds = calculateOdds(horse, entry.getValue());
-                    oddsLabel.setText("Odds: 1:" + String.format("%.2f", odds));
-                    selectedHorseForBet = horse;
-                    break;
-                }
+        String selectedName = (String) horseComboBox.getSelectedItem();
+        if (selectedName == null || horseStatsMap == null) return;
+
+        for (Horse horse : horseStatsMap.keySet()) {
+            if (horse.getName().equals(selectedName)) {
+                selectedHorse = horse;
+                List<RaceResult> results = horseStatsMap.getOrDefault(horse, List.of());
+                double odds = calculateOdds(horse, results);
+                oddsLabel.setText("Odds: 1:" + String.format("%.2f", odds));
+                break;
             }
         }
     }
 
     private double calculateOdds(Horse horse, List<RaceResult> results) {
-        if (results.isEmpty()) return 5.0;
+        if (results == null || results.isEmpty()) return 5.0;
+
         long wins = results.stream().filter(RaceResult::isWin).count();
-        double winPercentage = 100.0 * wins / results.size();
+        double winRate = (double) wins / results.size();
         double confidence = horse.getConfidence();
-        // Lower odds mean higher chances of winning
-        double odds = 100.0 / (winPercentage + confidence * 10);
-        return Math.max(odds, 1.1); // Ensure minimum odds of 1.1
+
+        double odds = 1.0 / (winRate + (confidence / 10.0));
+        return Math.max(odds * 10.0, 1.1); // Adjusted scaling for better display
     }
 
-    public boolean hasPlacedBet() {
-        return totalBetAmount > 0;
-    }
-
-    public double getTotalBetAmount() {
-        return totalBetAmount;
-    }
-
-    public Horse getSelectedHorseForBet() {
-        return selectedHorseForBet;
+    private void showMessage(String message) {
+        JOptionPane.showMessageDialog(this, message);
     }
 }
