@@ -4,12 +4,14 @@ import PartI.*;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 public class AddHorseTab extends JPanel {
+    private final List<Horse> horses = new ArrayList<>();
     private JTextField horseNameField;
     private JComboBox<String> horseSymbol;
     private JSlider confidenceSlider;
@@ -143,5 +145,9 @@ public class AddHorseTab extends JPanel {
     public void setRaceAdjusted(boolean adjusted) {
         addHorseButton.setEnabled(adjusted);
         startRaceButton.setEnabled(adjusted);
+    }
+    
+    public List<Horse> getHorses() {
+        return horses;
     }
 }

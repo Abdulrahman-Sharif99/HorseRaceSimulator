@@ -10,56 +10,34 @@ public class BettingTab extends JPanel {
     private JComboBox<String> horseComboBox;
     private JTextField betAmountField;
     private JLabel oddsLabel;
+    private JLabel balanceLabel;
     private JButton placeBetButton;
+
     private Map<Horse, List<RaceResult>> horseStatsMap;
     private Race race;
-    private double totalBetAmount = 0;
     private Horse selectedHorseForBet;
+    private Player player =  new Player(1000.0);
 
     public BettingTab() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createTitledBorder("Place Your Bet"));
 
-        // Panel for form inputs
-        JPanel formPanel = new JPanel(new GridBagLayout());
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.insets = new Insets(8, 8, 8, 8);
-        gbc.fill = GridBagConstraints.HORIZONTAL;
-
+        JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+        JPanel formPanel = new JPanel(new GridLayout(4, 2, 5, 5));
         horseComboBox = new JComboBox<>();
         betAmountField = new JTextField(10);
         oddsLabel = new JLabel("Odds: N/A");
+        balanceLabel = new JLabel("Balance: £" + String.format("%.2f", player.getBalance()));
         placeBetButton = new JButton("Place Bet");
-
-        // Row 1: Horse selection
-        gbc.gridx = 0;
-        gbc.gridy = 0;
-        formPanel.add(new JLabel("Select Horse:"), gbc);
-        gbc.gridx = 1;
-        formPanel.add(horseComboBox, gbc);
-
-        // Row 2: Bet amount
-        gbc.gridx = 0;
-        gbc.gridy = 1;
-        formPanel.add(new JLabel("Bet Amount (£):"), gbc);
-        gbc.gridx = 1;
-        formPanel.add(betAmountField, gbc);
-
-        // Row 3: Odds
-        gbc.gridx = 0;
-        gbc.gridy = 2;
-        formPanel.add(new JLabel("Odds:"), gbc);
-        gbc.gridx = 1;
-        formPanel.add(oddsLabel, gbc);
-
-        // Row 4: Button
-        gbc.gridx = 0;
-        gbc.gridy = 3;
-        gbc.gridwidth = 2;
-        gbc.anchor = GridBagConstraints.CENTER;
-        formPanel.add(placeBetButton, gbc);
-
-        add(formPanel, BorderLayout.NORTH);
+        topPanel.add(balanceLabel);
+        formPanel.add(new JLabel("Select Horse:"));
+        formPanel.add(horseComboBox);
+        formPanel.add(new JLabel("Bet Amount (£):"));
+        formPanel.add(betAmountField);
+        formPanel.add(oddsLabel);
+        formPanel.add(placeBetButton);
+        add(formPanel, BorderLayout.CENTER);
+        add(topPanel, BorderLayout.NORTH);
 
         // Listeners
         horseComboBox.addActionListener(e -> updateOdds());
@@ -69,15 +47,33 @@ public class BettingTab extends JPanel {
                 JOptionPane.showMessageDialog(this, "Please select a horse.");
                 return;
             }
+
             try {
                 double betAmount = Double.parseDouble(betAmountField.getText());
-                if (betAmount <= 0) {
-                    JOptionPane.showMessageDialog(this, "Bet amount must be positive.");
+
+                if (betAmount < Player.MIN_BET_AMOUNT && betAmount > 0) {
+                    JOptionPane.showMessageDialog(this, "Minimum bet is £5.00.");
+                    return;
+                } else if (betAmount <= 0) {
+                    JOptionPane.showMessageDialog(this, "Bet amount must be greater than zero.");
                     return;
                 }
-                totalBetAmount += betAmount;
-                JOptionPane.showMessageDialog(this, "Bet placed on " + selectedHorseForBet.getName() + " for £" + betAmount);
-                betAmountField.setText("");
+
+                if (player == null) {
+                    JOptionPane.showMessageDialog(this, "Player not initialized.");
+                    return;
+                }
+
+                boolean success = player.placeBet(selectedHorseForBet, betAmount);
+                if (success) {
+                    String formatted = String.format("%.2f", betAmount);
+                    JOptionPane.showMessageDialog(this, "Bet placed on " + selectedHorseForBet.getName() + " for £" + formatted);
+                    updateBalanceDisplay();
+                    betAmountField.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(this, "Insufficient balance to place this bet.");
+                }
+
             } catch (NumberFormatException ex) {
                 JOptionPane.showMessageDialog(this, "Invalid bet amount. Please enter a valid number.");
             }
@@ -94,6 +90,17 @@ public class BettingTab extends JPanel {
         updateHorseList();
     }
 
+    public void setPlayer(Player player) {
+        this.player = player;
+        updateBalanceDisplay();
+    }
+
+    private void updateBalanceDisplay() {
+        if (player != null) {
+            balanceLabel.setText("Balance: £" + String.format("%.2f", player.getBalance()));
+        }
+    }
+
     private void updateHorseList() {
         horseComboBox.removeAllItems();
         if (race != null && horseStatsMap != null) {
@@ -106,6 +113,48 @@ public class BettingTab extends JPanel {
         updateOdds(); // Refresh odds after list is updated
     }
 
+    private double updateOdds() {
+        String selectedName = (String) horseComboBox.getSelectedItem();
+        if (selectedName != null && horseStatsMap != null) {
+            for (Map.Entry<Horse, List<RaceResult>> entry : horseStatsMap.entrySet()) {
+                if (entry.getKey().getName().equals(selectedName)) {
+                    selectedHorseForBet = entry.getKey();
+                    double odds = calculateOdds(selectedHorseForBet, entry.getValue());
+                    oddsLabel.setText("Odds: 1:" + String.format("%.2f", odds));
+                    return odds;
+                }
+            }
+        }
+        oddsLabel.setText("Odds: N/A");
+        selectedHorseForBet = null;
+        return 0.0;
+    }
+
+    private double calculateOdds(Horse horse, List<RaceResult> results) {
+        if (results == null || results.isEmpty()) return 2.0;
+        long wins = results.stream().filter(RaceResult::isWin).count();
+        double winPercentage = 100.0 * wins / results.size();
+        double confidence = horse.getConfidence();
+        double odds = 100.0 / (winPercentage + confidence * 10);
+        return Math.max(odds, 1.1);
+    }
+
+    public boolean hasPlacedBet() {
+        return player != null && player.hasPlacedAnyBet();
+    }
+
+    public Player getPlayer() {
+        return player;
+    }
+
+    public Horse getSelectedHorseForBet() {
+        return selectedHorseForBet;
+    }
+
+    public double getTotalBetAmount() {
+        return player != null ? player.getBets().values().stream().mapToDouble(Double::doubleValue).sum() : 0.0;
+    }
+
     public void refreshHorseList() {
         horseComboBox.removeAllItems();
         if (race != null) {
@@ -116,42 +165,39 @@ public class BettingTab extends JPanel {
             }
         }
     }
-    
 
-    private void updateOdds() {
-        String selectedName = (String) horseComboBox.getSelectedItem();
-        if (selectedName != null && horseStatsMap != null) {
-            for (Map.Entry<Horse, List<RaceResult>> entry : horseStatsMap.entrySet()) {
-                if (entry.getKey().getName().equals(selectedName)) {
-                    selectedHorseForBet = entry.getKey();
-                    double odds = calculateOdds(selectedHorseForBet, entry.getValue());
-                    oddsLabel.setText("Odds: 1:" + String.format("%.2f", odds));
-                    return;
-                }
-            }
+    // NEW: Add this method to handle race result notification
+    public void notifyRaceFinished(Horse winner) {
+        if (selectedHorseForBet == null) return;
+
+        Double betAmount = player.getBets().get(selectedHorseForBet);
+        if (betAmount == null) return;
+
+        if(race.allHorsesFallen()) {
+            player.addWinnings(betAmount); // Refund the bet amount
+            JOptionPane.showMessageDialog(this,
+                    "All horses have fallen. No winners this time.",
+                    "DNF", 
+                    JOptionPane.INFORMATION_MESSAGE);
         }
-        oddsLabel.setText("Odds: N/A");
-        selectedHorseForBet = null;
-    }
 
-    private double calculateOdds(Horse horse, List<RaceResult> results) {
-        if (results == null || results.isEmpty()) return 5.0;
-        long wins = results.stream().filter(RaceResult::isWin).count();
-        double winPercentage = 100.0 * wins / results.size();
-        double confidence = horse.getConfidence();
-        double odds = 100.0 / (winPercentage + confidence * 10);
-        return Math.max(odds, 1.1);
-    }
-
-    public boolean hasPlacedBet() {
-        return totalBetAmount > 0;
-    }
-
-    public double getTotalBetAmount() {
-        return totalBetAmount;
-    }
-
-    public Horse getSelectedHorseForBet() {
-        return selectedHorseForBet;
+        if (selectedHorseForBet.equals(winner)) {
+            double odds = updateOdds();
+            double winnings = betAmount * odds; // payout
+            player.addWinnings(winnings);
+            JOptionPane.showMessageDialog(this,
+                    "🎉 Congratulations! Your horse " + winner.getName() + " won!\n" +
+                    "You won £" + String.format("%.2f", winnings) + "!",
+                    "You Win!",
+                    JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(this,
+                    "😞 Sorry, your horse " + selectedHorseForBet.getName() + " lost.\n" +
+                    "Better luck next time!",
+                    "You Lose",
+                    JOptionPane.INFORMATION_MESSAGE);
+        }
+        player.clearBets();              // 🔁 Reset for next race
+        updateBalanceDisplay();
     }
 }

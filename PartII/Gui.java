@@ -14,6 +14,7 @@ public class Gui extends JFrame {
     private JFrame raceWindow;
     private StatsTab statsTab;
     private BettingTab bettingTab;
+    private AddHorseTab addHorseTab;
 
     public Gui() {
         setTitle("Race Track Simulator");
@@ -21,9 +22,10 @@ public class Gui extends JFrame {
         setLayout(new BorderLayout());
 
         JTabbedPane tabbedPane = new JTabbedPane();
-        AdjustRaceTab adjustRaceTab = new AdjustRaceTab();
+        addHorseTab = new AddHorseTab();
         AddHorseTab addHorseTab = new AddHorseTab();
         statsTab = new StatsTab();
+        AdjustRaceTab adjustRaceTab = new AdjustRaceTab(); // Declare and initialize adjustRaceTab
         bettingTab = new BettingTab();
 
         // Set up tabbed pane with larger minimum size
@@ -46,7 +48,7 @@ public class Gui extends JFrame {
 
         addHorseTab.setOnHorseAdded(() -> {
             statsTab.updateStats(race);
-            bettingTab.refreshHorseList(); // ✅ Update betting options
+            bettingTab.refreshHorseList(); 
         });
         
         addHorseTab.setOnRaceStarted((racePanel, onFinished) -> {
@@ -82,13 +84,19 @@ public class Gui extends JFrame {
         raceWindow.setSize(800, 600);
         raceWindow.setLocationRelativeTo(null);
         raceWindow.setVisible(true);
-    
-        // Create a new race instance
-        Race race = new Race(1000, 5); // Example race length and number of lanes (adjust as needed)
-    
-        // Add horses to the race (use real horse objects here)
-        race.addHorse(selectedHorse, 1);
-        // Add other horses...
+
+        // Add all horses from the AddHorseTab to the race
+        List<Horse> horsesInRace = addHorseTab.getHorses();
+        for (int i = 0; i < horsesInRace.size(); i++) {
+            Horse horse = horsesInRace.get(i);
+            if (horse != null) {
+                try {
+                    race.addHorse(horse, i + 1); // Adding horses to respective lanes
+                } catch (IllegalArgumentException e) {
+                    System.out.println("Error adding horse: " + e.getMessage());
+                }
+            }
+        }
     
         // Start the race simulation in a separate thread
         new Thread(() -> {
@@ -106,27 +114,47 @@ public class Gui extends JFrame {
                     isRaceInProgress = false;
                     raceWindow.dispose();
                     JOptionPane.showMessageDialog(this, "Race finished! Check the stats tab for results.");
+    
+                    // Collect RaceResults for each horse
+                    for (Horse horse : race.getLanes()) {
+                        if (horse != null) {
+                            boolean hasWon = horse.getDistanceTravelled() >= race.getRaceLength() && !horse.hasFallen();
+                            RaceResult result = new RaceResult(
+                                    race.getRaceLength(), // Use race length as time, can be adjusted to actual time
+                                    hasWon,               // Win status
+                                    horse.hasFallen(),    // Fall status
+                                    horse.getDistanceTravelled() / (double) race.getRaceLength(), // avgSpeed (simplified)
+                                    race.getTrackShape(),
+                                    race.getWeatherCondition()
+                            );
+                            
+                            // Add result to the StatsTab
+                            horseStatsMap.computeIfAbsent(horse, k -> new ArrayList<>()).add(result);
+                        }
+                    }
+    
                     // Update the stats tab with the race results
                     statsTab.updateStats(race);
+    
                     // Call the onFinished callback after the race ends
                     onFinished.accept(() -> {
                         // This is where you can handle any actions after the race finishes (e.g., update bets)
-                        System.out.println("Race finished, bet results to be processed.");
+                        System.out.println("The winner of the race is .... " + race.getWinner().getName() +"!");
+                        bettingTab.notifyRaceFinished(race.getWinner());
                     });
                 });
             } catch (Exception e) {
                 e.printStackTrace();
             }
         }).start();
-    }    
+    }
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(Gui::new);
     }
 }
 
-
-// RaceResult class
+// RaceResult class remains unchanged
 class RaceResult {
     private final double time;
     private final boolean win;
