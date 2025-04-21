@@ -141,10 +141,12 @@ public class AddHorseTab extends JPanel {
         this.onRaceStarted = callback;
     }
 
-    // ✅ Enable/Disable buttons depending on race adjustment
     public void setRaceAdjusted(boolean adjusted) {
         addHorseButton.setEnabled(adjusted);
-        startRaceButton.setEnabled(adjusted);
+    }
+
+    public void setBetPlaced(boolean isBetPlaced){
+        startRaceButton.setEnabled(isBetPlaced);
     }
     
     public List<Horse> getHorses() {

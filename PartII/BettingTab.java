@@ -18,6 +18,9 @@ public class BettingTab extends JPanel {
     private Horse selectedHorseForBet;
     private Player player =  new Player(1000.0);
 
+    private boolean BetPlaced = false;
+    private Runnable onBetPlaced; // Add this line at class level
+
     public BettingTab() {
         setLayout(new BorderLayout(10, 10));
         setBorder(BorderFactory.createTitledBorder("Place Your Bet"));
@@ -70,6 +73,10 @@ public class BettingTab extends JPanel {
                     JOptionPane.showMessageDialog(this, "Bet placed on " + selectedHorseForBet.getName() + " for £" + formatted);
                     updateBalanceDisplay();
                     betAmountField.setText("");
+                    BetPlaced = true;
+                    if (onBetPlaced != null) {
+                        onBetPlaced.run();
+                    }
                 } else {
                     JOptionPane.showMessageDialog(this, "Insufficient balance to place this bet.");
                 }
@@ -151,6 +158,10 @@ public class BettingTab extends JPanel {
         return selectedHorseForBet;
     }
 
+    public boolean isBetPlaced() {
+        return BetPlaced;
+    }
+
     public double getTotalBetAmount() {
         return player != null ? player.getBets().values().stream().mapToDouble(Double::doubleValue).sum() : 0.0;
     }
@@ -166,21 +177,23 @@ public class BettingTab extends JPanel {
         }
     }
 
-    // NEW: Add this method to handle race result notification
-    public void notifyRaceFinished(Horse winner) {
+    public void notifyRaceFinished(Horse winner, Race race) {
         if (selectedHorseForBet == null) return;
-
+    
         Double betAmount = player.getBets().get(selectedHorseForBet);
         if (betAmount == null) return;
-
-        if(race.allHorsesFallen()) {
+    
+        if (race.allHorsesFallen()) {
             player.addWinnings(betAmount); // Refund the bet amount
             JOptionPane.showMessageDialog(this,
-                    "All horses have fallen. No winners this time.",
+                    "All horses have fallen. No winners this time.\nYour bet has been refunded.",
                     "DNF", 
                     JOptionPane.INFORMATION_MESSAGE);
+            player.clearBets();            // 🔁 Reset for next race
+            updateBalanceDisplay();
+            return; // ❗ Exit early to avoid running the winner/loser logic
         }
-
+    
         if (selectedHorseForBet.equals(winner)) {
             double odds = updateOdds();
             double winnings = betAmount * odds; // payout
@@ -197,7 +210,13 @@ public class BettingTab extends JPanel {
                     "You Lose",
                     JOptionPane.INFORMATION_MESSAGE);
         }
+    
         player.clearBets();              // 🔁 Reset for next race
         updateBalanceDisplay();
+    }
+    
+
+    public void setOnBetPlaced(Runnable onBetPlaced) {
+        this.onBetPlaced = onBetPlaced;
     }
 }

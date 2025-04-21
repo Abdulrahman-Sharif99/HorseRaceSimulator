@@ -45,11 +45,13 @@ public class Gui extends JFrame {
             statsTab.updateStats(race);
         });
         
-
         addHorseTab.setOnHorseAdded(() -> {
             statsTab.updateStats(race);
             bettingTab.refreshHorseList(); 
         });
+
+        bettingTab.setOnBetPlaced(() -> addHorseTab.setBetPlaced(true));
+
         
         addHorseTab.setOnRaceStarted((racePanel, onFinished) -> {
             if (!bettingTab.hasPlacedBet()) {
@@ -72,7 +74,7 @@ public class Gui extends JFrame {
 
     private void startRace(RacePanel racePanel, Consumer<Runnable> onFinished, Horse selectedHorse, double totalBetAmount) {
         if (isRaceInProgress) {
-            JOptionPane.showMessageDialog(this, "A race is already in progress!");
+            JOptionPane.showMessageDialog(this,"The winner of the race is .... " + race.getWinner().getName() +"!");
             return;
         }
     
@@ -113,7 +115,7 @@ public class Gui extends JFrame {
                 SwingUtilities.invokeLater(() -> {
                     isRaceInProgress = false;
                     raceWindow.dispose();
-                    JOptionPane.showMessageDialog(this, "Race finished! Check the stats tab for results.");
+                    JOptionPane.showMessageDialog(this, "The winner of the race is .... " + race.getWinner().getName() +"!");
     
                     // Collect RaceResults for each horse
                     for (Horse horse : race.getLanes()) {
@@ -138,9 +140,8 @@ public class Gui extends JFrame {
     
                     // Call the onFinished callback after the race ends
                     onFinished.accept(() -> {
-                        // This is where you can handle any actions after the race finishes (e.g., update bets)
                         System.out.println("The winner of the race is .... " + race.getWinner().getName() +"!");
-                        bettingTab.notifyRaceFinished(race.getWinner());
+                        bettingTab.notifyRaceFinished(race.getWinner(), race);
                     });
                 });
             } catch (Exception e) {
