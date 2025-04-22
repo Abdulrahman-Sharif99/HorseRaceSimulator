@@ -117,7 +117,7 @@ public class Gui extends JFrame {
                                     race.getRaceLength(),
                                     hasWon,
                                     horse.hasFallen(),
-                                    horse.getDistanceTravelled() / (double) race.getRaceLength(),
+                                    horse.getDistanceTravelled() / (double) race.getRaceLength() + addHorseTab.SpeedModifier(addHorseTab.getSaddleComboBox(), addHorseTab.getHorseshoeComboBox())                                    ,
                                     race.getTrackShape(),
                                     race.getWeatherCondition()
                             );
@@ -141,6 +141,7 @@ public class Gui extends JFrame {
                 e.printStackTrace();
             }
         }).start();
+
     }
 
     public static void main(String[] args) {
@@ -188,5 +189,8 @@ class RaceResult {
 
     public String getWeatherCondition() {
         return weatherCondition;
+    }
+    public double setSpeed(double speed) {
+        return speed;
     }
 }

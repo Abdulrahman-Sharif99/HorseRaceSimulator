@@ -18,6 +18,12 @@ public class AddHorseTab extends JPanel {
     private JComboBox<Integer> laneComboBox;
     private JButton addHorseButton;
     private JButton startRaceButton;
+    private JComboBox<String> breedComboBox;
+    private JComboBox<String> coatColorComboBox;
+    JComboBox<String> saddleComboBox;
+    private JComboBox<String> horseshoeComboBox;
+    private JComboBox<String> accessoryComboBox;
+
 
     private Race race;
     private Map<Horse, List<RaceResult>> horseStatsMap;
@@ -43,6 +49,12 @@ public class AddHorseTab extends JPanel {
         confidenceSlider.setPaintLabels(true);
 
         laneComboBox = new JComboBox<>();
+        breedComboBox = new JComboBox<>(new String[]{"Thoroughbred", "Arabian", "Mustang"});
+        coatColorComboBox = new JComboBox<>(new String[]{"Black", "Chestnut", "Grey", "Bay", "Palomino"});
+        saddleComboBox = new JComboBox<>(new String[]{"Standard", "Lightweight", "Heavy"});
+        horseshoeComboBox = new JComboBox<>(new String[]{"Basic", "Grip-enhanced", "Speed-boosting"});
+        accessoryComboBox = new JComboBox<>(new String[]{"None", "Blinkers", "Decorative Ribbon"});
+
 
         addHorseButton = new JButton("Add Horse");
         startRaceButton = new JButton("Start Race");
@@ -55,6 +67,21 @@ public class AddHorseTab extends JPanel {
 
         formPanel.add(new JLabel("Horse Symbol:"));
         formPanel.add(horseSymbol);
+
+        formPanel.add(new JLabel("Breed:"));
+        formPanel.add(breedComboBox);
+
+        formPanel.add(new JLabel("Coat Color:"));
+        formPanel.add(coatColorComboBox);
+
+        formPanel.add(new JLabel("Saddle:"));
+        formPanel.add(saddleComboBox);
+
+        formPanel.add(new JLabel("Horseshoes:"));
+        formPanel.add(horseshoeComboBox);
+
+        formPanel.add(new JLabel("Accessory:"));
+        formPanel.add(accessoryComboBox);
 
         formPanel.add(new JLabel("Confidence:"));
         formPanel.add(confidenceSlider);
@@ -89,7 +116,7 @@ public class AddHorseTab extends JPanel {
         
             Horse horse = new Horse(symbol, name, confidence);
             race.addHorse(horse, lane);
-            horses.add(horse); // ✅ FIXED: Now adds to the horses list
+            horses.add(horse); 
             horseStatsMap.putIfAbsent(horse, new java.util.ArrayList<>());
         
             if (onHorseAdded != null) onHorseAdded.run();
@@ -97,6 +124,26 @@ public class AddHorseTab extends JPanel {
             JOptionPane.showMessageDialog(this, "Horse added!");
             horseNameField.setText("");
             confidenceSlider.setValue(50);
+
+            String breed = (String) breedComboBox.getSelectedItem();
+            String coatColor = (String) coatColorComboBox.getSelectedItem();
+            String saddle = (String) saddleComboBox.getSelectedItem();
+            String horseshoe = (String) horseshoeComboBox.getSelectedItem();
+            String accessory = (String) accessoryComboBox.getSelectedItem();
+
+            // Apply visual customization
+            horse.setBreed(breed);
+            horse.setCoatColor(coatColor);
+
+            // Apply performance effects based on equipment
+            applyEquipmentEffects(horse, saddle, horseshoe, accessory);
+            SpeedModifier(saddle,horseshoe);
+
+            // Add horse
+            race.addHorse(horse, lane);
+            horses.add(horse);
+            horseStatsMap.putIfAbsent(horse, new ArrayList<>());
+
         });
         
 
@@ -152,5 +199,35 @@ public class AddHorseTab extends JPanel {
 
     public List<Horse> getHorses() {
         return horses;
+    }
+
+    private void applyEquipmentEffects(Horse horse, String saddle, String horseshoe, String accessory) {
+        double confidenceMod = 0.0;
+    
+        switch (saddle) {
+            case "Heavy" -> confidenceMod += 0.1;
+        }
+    
+        switch (horseshoe) {
+            case "Grip-enhanced" -> confidenceMod += 0.1;
+        }
+    
+        if ("Blinkers".equals(accessory)) confidenceMod += 0.05;
+        horse.setConfidence(horse.getConfidence()+ confidenceMod);
+    }
+
+    public double SpeedModifier(String saddle, String horseshoe) {
+        double speedMod = 0.0;
+        if (saddle.equals("Lightweight")) speedMod += 0.1;
+        if (horseshoe.equals("Speed-boosting")) speedMod += 0.3;
+        return speedMod;
+    }
+
+    public String getSaddleComboBox() {
+        return saddleComboBox.getSelectedItem().toString();
+    }
+
+    public String getHorseshoeComboBox() {
+        return horseshoeComboBox.getSelectedItem().toString();
     }
 }

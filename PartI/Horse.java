@@ -5,6 +5,8 @@ public class Horse {
     private int distanceTravelled;
     private boolean fallen;
     private double confidence;
+    private String coatColor; 
+    private String breed; 
 
     public Horse(char horseSymbol, String horseName, double horseConfidence) {
         this.symbol = horseSymbol;
@@ -57,6 +59,21 @@ public class Horse {
     // Optional helper
     public void increaseConfidence() {
         setConfidence(confidence + 0.05);
+    }
+
+    public void setCoatColor(String coatColor) {
+        this.coatColor = coatColor;
+    }
+
+    public String getCoatColor() {
+        return coatColor;
+    }
+
+    public void setBreed(String breed) {
+        this.breed = breed;
+    }
+    public String getBreed() {
+        return breed;
     }
 }
 

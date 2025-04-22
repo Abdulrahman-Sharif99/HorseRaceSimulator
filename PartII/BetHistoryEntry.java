@@ -17,10 +17,10 @@ public class BetHistoryEntry {
 
     public String toString() {
         if (won) {
-            return horse.getName() + " - Bet: £" + String.format("%.2f", amount) +
+            return "Horse: " + horse.getName() + " - Bet: £" + String.format("%.2f", amount) +
                    " - WIN! Winnings: £" + String.format("%.2f", winnings);
         } else {
-            return horse.getName() + " - Bet: £" + String.format("%.2f", amount) + " - LOST";
+            return "Horse: " + horse.getName() + " - Bet: £" + String.format("%.2f", amount) + " - LOST";
         }
     }
 }
