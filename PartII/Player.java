@@ -1,6 +1,6 @@
 package PartII;
 
-import PartI.Horse;
+import PartI.*;
 import java.util.*;
 
 public class Player {
@@ -77,8 +77,8 @@ public class Player {
         bets.clear();
     }
 
-    public void recordBetResult(Horse horse, double amount, boolean won, double winnings) {
-        betHistory.add(new BetHistoryEntry(horse, amount, won, winnings));
+    public void recordBetResult(Horse horse, double amount, boolean won, double winnings, Race race) {
+        betHistory.add(new BetHistoryEntry(horse, amount, won, winnings, race));
     }
 
     public List<BetHistoryEntry> getBetHistory() {

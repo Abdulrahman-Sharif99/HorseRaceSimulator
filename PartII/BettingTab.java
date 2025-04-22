@@ -192,7 +192,7 @@ public class BettingTab extends JPanel {
         Double betAmount = player.getBets().get(selectedHorseForBet);
         if (race.allHorsesFallen()) {
             player.addWinnings(betAmount);
-            player.recordBetResult(selectedHorseForBet, betAmount, false, 0.0);
+            player.recordBetResult(selectedHorseForBet, betAmount, false, 0.0, race);
             historyListModel.addElement(player.getBetHistory().get(player.getBetHistory().size() - 1).toString());
         
             JOptionPane.showMessageDialog(this,
@@ -207,7 +207,7 @@ public class BettingTab extends JPanel {
             double odds = updateOdds();
             double winnings = betAmount * odds;
             player.addWinnings(winnings);
-            player.recordBetResult(selectedHorseForBet, betAmount, true, winnings);
+            player.recordBetResult(selectedHorseForBet, betAmount, true, winnings, race);
             historyListModel.addElement(player.getBetHistory().get(player.getBetHistory().size() - 1).toString());
         
             JOptionPane.showMessageDialog(this,
@@ -215,7 +215,7 @@ public class BettingTab extends JPanel {
                     "You won £" + String.format("%.2f", winnings) + "!",
                     "You Win!", JOptionPane.INFORMATION_MESSAGE);
         } else {
-            player.recordBetResult(selectedHorseForBet, betAmount, false, 0.0);
+            player.recordBetResult(selectedHorseForBet, betAmount, false, 0.0, race);
             historyListModel.addElement(player.getBetHistory().get(player.getBetHistory().size() - 1).toString());
         
             JOptionPane.showMessageDialog(this,

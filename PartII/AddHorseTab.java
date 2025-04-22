@@ -131,19 +131,11 @@ public class AddHorseTab extends JPanel {
             String horseshoe = (String) horseshoeComboBox.getSelectedItem();
             String accessory = (String) accessoryComboBox.getSelectedItem();
 
-            // Apply visual customization
             horse.setBreed(breed);
             horse.setCoatColor(coatColor);
 
-            // Apply performance effects based on equipment
             applyEquipmentEffects(horse, saddle, horseshoe, accessory);
-            SpeedModifier(saddle,horseshoe);
-
-            // Add horse
-            race.addHorse(horse, lane);
-            horses.add(horse);
-            horseStatsMap.putIfAbsent(horse, new ArrayList<>());
-
+            SpeedModifier(saddle,horseshoe, breed);
         });
         
 
@@ -213,13 +205,16 @@ public class AddHorseTab extends JPanel {
         }
     
         if ("Blinkers".equals(accessory)) confidenceMod += 0.05;
-        horse.setConfidence(horse.getConfidence()+ confidenceMod);
+        horse.setConfidence(horse.getConfidence() + confidenceMod);
     }
 
-    public double SpeedModifier(String saddle, String horseshoe) {
+    public double SpeedModifier(String saddle, String horseshoe, String breed) {
         double speedMod = 0.0;
         if (saddle.equals("Lightweight")) speedMod += 0.1;
         if (horseshoe.equals("Speed-boosting")) speedMod += 0.3;
+        if (breed.equals("Thoroughbred")) speedMod += 0.2;
+        else if(breed.equals("Arabian")) speedMod += 0.1;
+        else if(breed.equals("Mustang")) speedMod += 0.05;
         return speedMod;
     }
 
@@ -229,5 +224,9 @@ public class AddHorseTab extends JPanel {
 
     public String getHorseshoeComboBox() {
         return horseshoeComboBox.getSelectedItem().toString();
+    }
+
+    public String getBreedComboBox() {
+        return breedComboBox.getSelectedItem().toString();
     }
 }

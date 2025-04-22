@@ -110,14 +110,15 @@ public class Gui extends JFrame {
                     raceWindow.dispose();
                     
                     // Collect RaceResults for each horse
-                    for (Horse horse : race.getLanes()) {
+                    for (int lane = 0; lane < race.getLanes().size(); lane++) {
+                        Horse horse = race.getLanes().get(lane);
                         if (horse != null) {
                             boolean hasWon = horse.getDistanceTravelled() >= race.getRaceLength() && !horse.hasFallen();
                             RaceResult result = new RaceResult(
                                     race.getRaceLength(),
                                     hasWon,
                                     horse.hasFallen(),
-                                    horse.getDistanceTravelled() / (double) race.getRaceLength() + addHorseTab.SpeedModifier(addHorseTab.getSaddleComboBox(), addHorseTab.getHorseshoeComboBox())                                    ,
+                                    horse.getDistanceTravelled() / (double) race.getRaceLength() + addHorseTab.SpeedModifier(addHorseTab.getSaddleComboBox(), addHorseTab.getHorseshoeComboBox(), addHorseTab.getBreedComboBox()),
                                     race.getTrackShape(),
                                     race.getWeatherCondition()
                             );
