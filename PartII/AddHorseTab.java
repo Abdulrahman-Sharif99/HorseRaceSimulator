@@ -47,7 +47,6 @@ public class AddHorseTab extends JPanel {
         addHorseButton = new JButton("Add Horse");
         startRaceButton = new JButton("Start Race");
 
-        // ❌ Disabled until race is adjusted
         addHorseButton.setEnabled(false);
         startRaceButton.setEnabled(false);
 
@@ -77,27 +76,29 @@ public class AddHorseTab extends JPanel {
                 JOptionPane.showMessageDialog(this, "Please adjust the race first.");
                 return;
             }
-
+        
             String name = horseNameField.getText().trim();
             if (name.isEmpty()) {
                 JOptionPane.showMessageDialog(this, "Enter a horse name.");
                 return;
             }
-
+        
             char symbol = ((String) horseSymbol.getSelectedItem()).charAt(0);
             double confidence = confidenceSlider.getValue() / 100.0;
             int lane = (int) laneComboBox.getSelectedItem();
-
+        
             Horse horse = new Horse(symbol, name, confidence);
             race.addHorse(horse, lane);
+            horses.add(horse); // ✅ FIXED: Now adds to the horses list
             horseStatsMap.putIfAbsent(horse, new java.util.ArrayList<>());
-
+        
             if (onHorseAdded != null) onHorseAdded.run();
-
+        
             JOptionPane.showMessageDialog(this, "Horse added!");
             horseNameField.setText("");
             confidenceSlider.setValue(50);
         });
+        
 
         startRaceButton.addActionListener(e -> {
             if (isRaceInProgress) {
@@ -148,7 +149,7 @@ public class AddHorseTab extends JPanel {
     public void setBetPlaced(boolean isBetPlaced){
         startRaceButton.setEnabled(isBetPlaced);
     }
-    
+
     public List<Horse> getHorses() {
         return horses;
     }

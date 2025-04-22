@@ -1,18 +1,19 @@
 package PartII;
 
 import PartI.Horse;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class Player {
     private double balance;
-    private Map<Horse, Double> bets; // Keeps track of which horse the player bet on and how much
+    private Map<Horse, Double> bets;
+    private final List<BetHistoryEntry> betHistory;
 
     public static final double MIN_BET_AMOUNT = 5.0;
 
     public Player(double startingBalance) {
         this.balance = startingBalance;
         this.bets = new HashMap<>();
+        this.betHistory = new ArrayList<>();
     }
 
     public double getBalance() {
@@ -21,7 +22,7 @@ public class Player {
 
     public boolean placeBet(Horse horse, double amount) {
         if (amount < MIN_BET_AMOUNT) {
-            return false; // Below minimum
+            return false;
         }
 
         if (amount <= balance) {
@@ -30,7 +31,7 @@ public class Player {
             return true;
         }
 
-        return false; // Insufficient balance
+        return false;
     }
 
     public void addWinnings(double amount) {
@@ -69,10 +70,18 @@ public class Player {
     }
 
     public double getTotalBetAmount() {
-        return bets.values().stream().mapToInt(Double::intValue).sum();
+        return bets.values().stream().mapToDouble(Double::doubleValue).sum();
     }
 
     public void clearBets() {
         bets.clear();
+    }
+
+    public void recordBetResult(Horse horse, double amount, boolean won, double winnings) {
+        betHistory.add(new BetHistoryEntry(horse, amount, won, winnings));
+    }
+
+    public List<BetHistoryEntry> getBetHistory() {
+        return betHistory;
     }
 }

@@ -19,7 +19,11 @@ public class BettingTab extends JPanel {
     private Player player =  new Player(1000.0);
 
     private boolean BetPlaced = false;
-    private Runnable onBetPlaced; // Add this line at class level
+    private Runnable onBetPlaced;
+
+    private DefaultListModel<String> historyListModel;
+    private JList<String> historyList;
+
 
     public BettingTab() {
         setLayout(new BorderLayout(10, 10));
@@ -42,7 +46,13 @@ public class BettingTab extends JPanel {
         add(formPanel, BorderLayout.CENTER);
         add(topPanel, BorderLayout.NORTH);
 
-        // Listeners
+        historyListModel = new DefaultListModel<>();
+        historyList = new JList<>(historyListModel);
+        JScrollPane historyScrollPane = new JScrollPane(historyList);
+        historyScrollPane.setPreferredSize(new Dimension(250, 0));
+        historyScrollPane.setBorder(BorderFactory.createTitledBorder("Betting History"));
+        add(historyScrollPane, BorderLayout.EAST);
+
         horseComboBox.addActionListener(e -> updateOdds());
 
         placeBetButton.addActionListener(e -> {
@@ -117,7 +127,7 @@ public class BettingTab extends JPanel {
                 }
             }
         }
-        updateOdds(); // Refresh odds after list is updated
+        updateOdds();
     }
 
     private double updateOdds() {
@@ -179,39 +189,43 @@ public class BettingTab extends JPanel {
 
     public void notifyRaceFinished(Horse winner, Race race) {
         if (selectedHorseForBet == null) return;
-    
         Double betAmount = player.getBets().get(selectedHorseForBet);
-        if (betAmount == null) return;
-    
         if (race.allHorsesFallen()) {
-            player.addWinnings(betAmount); // Refund the bet amount
+            player.addWinnings(betAmount);
+            player.recordBetResult(selectedHorseForBet, betAmount, false, 0.0);
+            historyListModel.addElement(player.getBetHistory().get(player.getBetHistory().size() - 1).toString());
+        
             JOptionPane.showMessageDialog(this,
                     "All horses have fallen. No winners this time.\nYour bet has been refunded.",
-                    "DNF", 
-                    JOptionPane.INFORMATION_MESSAGE);
-            player.clearBets();            // 🔁 Reset for next race
+                    "DNF", JOptionPane.INFORMATION_MESSAGE);
+            player.clearBets();
             updateBalanceDisplay();
-            return; // ❗ Exit early to avoid running the winner/loser logic
+            return;
         }
-    
+        
         if (selectedHorseForBet.equals(winner)) {
             double odds = updateOdds();
-            double winnings = betAmount * odds; // payout
+            double winnings = betAmount * odds;
             player.addWinnings(winnings);
+            player.recordBetResult(selectedHorseForBet, betAmount, true, winnings);
+            historyListModel.addElement(player.getBetHistory().get(player.getBetHistory().size() - 1).toString());
+        
             JOptionPane.showMessageDialog(this,
                     "🎉 Congratulations! Your horse " + winner.getName() + " won!\n" +
                     "You won £" + String.format("%.2f", winnings) + "!",
-                    "You Win!",
-                    JOptionPane.INFORMATION_MESSAGE);
+                    "You Win!", JOptionPane.INFORMATION_MESSAGE);
         } else {
+            player.recordBetResult(selectedHorseForBet, betAmount, false, 0.0);
+            historyListModel.addElement(player.getBetHistory().get(player.getBetHistory().size() - 1).toString());
+        
             JOptionPane.showMessageDialog(this,
                     "😞 Sorry, your horse " + selectedHorseForBet.getName() + " lost.\n" +
                     "Better luck next time!",
-                    "You Lose",
-                    JOptionPane.INFORMATION_MESSAGE);
+                    "You Lose", JOptionPane.INFORMATION_MESSAGE);
         }
+        
     
-        player.clearBets();              // 🔁 Reset for next race
+        player.clearBets();
         updateBalanceDisplay();
     }
     

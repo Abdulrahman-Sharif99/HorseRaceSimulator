@@ -74,73 +74,66 @@ public class Gui extends JFrame {
 
     private void startRace(RacePanel racePanel, Consumer<Runnable> onFinished, Horse selectedHorse, double totalBetAmount) {
         if (isRaceInProgress) {
-            JOptionPane.showMessageDialog(this,"The winner of the race is .... " + race.getWinner().getName() +"!");
             return;
         }
     
         isRaceInProgress = true;
         raceWindow = new JFrame("Race in Progress");
-        raceWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE); // Prevent closing during race
+        raceWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         raceWindow.setLayout(new BorderLayout());
         raceWindow.add(racePanel, BorderLayout.CENTER);
         raceWindow.setSize(800, 600);
         raceWindow.setLocationRelativeTo(null);
         raceWindow.setVisible(true);
-
+    
         // Add all horses from the AddHorseTab to the race
         List<Horse> horsesInRace = addHorseTab.getHorses();
         for (int i = 0; i < horsesInRace.size(); i++) {
             Horse horse = horsesInRace.get(i);
             if (horse != null) {
                 try {
-                    race.addHorse(horse, i + 1); // Adding horses to respective lanes
+                    race.addHorse(horse, i + 1);
                 } catch (IllegalArgumentException e) {
                     System.out.println("Error adding horse: " + e.getMessage());
                 }
             }
         }
     
-        // Start the race simulation in a separate thread
         new Thread(() -> {
             try {
-                // Run race simulation
                 race.startRace(() -> {
-                    // After each progress update, notify the GUI to repaint the race panel
-                    SwingUtilities.invokeLater(() -> {
-                        racePanel.repaint();
-                    });
+                    SwingUtilities.invokeLater(racePanel::repaint);
                 });
     
-                // After the race is complete, invoke the onFinished callback
                 SwingUtilities.invokeLater(() -> {
                     isRaceInProgress = false;
                     raceWindow.dispose();
-                    JOptionPane.showMessageDialog(this, "The winner of the race is .... " + race.getWinner().getName() +"!");
-    
+                    
                     // Collect RaceResults for each horse
                     for (Horse horse : race.getLanes()) {
                         if (horse != null) {
                             boolean hasWon = horse.getDistanceTravelled() >= race.getRaceLength() && !horse.hasFallen();
                             RaceResult result = new RaceResult(
-                                    race.getRaceLength(), // Use race length as time, can be adjusted to actual time
-                                    hasWon,               // Win status
-                                    horse.hasFallen(),    // Fall status
-                                    horse.getDistanceTravelled() / (double) race.getRaceLength(), // avgSpeed (simplified)
+                                    race.getRaceLength(),
+                                    hasWon,
+                                    horse.hasFallen(),
+                                    horse.getDistanceTravelled() / (double) race.getRaceLength(),
                                     race.getTrackShape(),
                                     race.getWeatherCondition()
                             );
-                            
-                            // Add result to the StatsTab
                             horseStatsMap.computeIfAbsent(horse, k -> new ArrayList<>()).add(result);
                         }
                     }
     
-                    // Update the stats tab with the race results
+                    // Update stats tab
                     statsTab.updateStats(race);
     
-                    // Call the onFinished callback after the race ends
+                    // Show race result
+                    String winnerName = race.getWinner() != null ? race.getWinner().getName() : "No winner (all horses fell)";
+                    JOptionPane.showMessageDialog(this, "The winner of the race is .... " + winnerName + "!");
+    
+                    // Notify betting tab
                     onFinished.accept(() -> {
-                        System.out.println("The winner of the race is .... " + race.getWinner().getName() +"!");
                         bettingTab.notifyRaceFinished(race.getWinner(), race);
                     });
                 });
