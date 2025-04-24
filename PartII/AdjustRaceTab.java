@@ -59,4 +59,12 @@ public class AdjustRaceTab extends JPanel {
     public void setOnRaceAdjusted(BiConsumer<Race, String[]> callback) {
         this.onRaceAdjusted = callback;
     }
+
+    public String getRaceTrack(){
+        return (String) trackShapeComboBox.getSelectedItem();
+    }
+
+    public String getTrackShape() {
+        return (String) trackShapeComboBox.getSelectedItem();
+    }
 }

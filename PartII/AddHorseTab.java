@@ -154,7 +154,7 @@ public class AddHorseTab extends JPanel {
             isRaceInProgress = true;
             for (Horse h : race.getLanes()) if (h != null) h.goBackToStart();
 
-            RacePanel racePanel = new RacePanel(race);
+            RacePanel racePanel = new RacePanel(race, horses);
             if (onRaceStarted != null) {
                 onRaceStarted.accept(racePanel, (finisher) -> {
                     isRaceInProgress = false;

@@ -15,7 +15,8 @@ public class Gui extends JFrame {
     private StatsTab statsTab;
     private BettingTab bettingTab;
     private AddHorseTab addHorseTab;
-    private String currentWeather = "Clear";
+    private String currentWeather;
+    private String currenttrackshape;
 
     public Gui() {
         setTitle("Race Track Simulator");
@@ -34,6 +35,7 @@ public class Gui extends JFrame {
         adjustRaceTab.setOnRaceAdjusted((newRace, trackDetails) -> {
             this.race = newRace;
             race.setTrackShape(trackDetails[0]);
+            this.currenttrackshape = adjustRaceTab.getTrackShape();
             race.setWeatherCondition(trackDetails[1]);
             currentWeather = trackDetails[1];
             addHorseTab.setWeatherCondition(currentWeather);
@@ -95,7 +97,8 @@ public class Gui extends JFrame {
         if (isRaceInProgress) {
             return;
         }
-    
+
+        racePanel.setTrackShape(currenttrackshape);
         isRaceInProgress = true;
         raceWindow = new JFrame("Race in Progress");
         raceWindow.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
