@@ -32,6 +32,7 @@ public class AddHorseTab extends JPanel {
     private BiConsumer<RacePanel, Consumer<Runnable>> onRaceStarted;
 
     private boolean isRaceInProgress = false;
+    public String currentWeather;
 
     public AddHorseTab() {
         setLayout(new BorderLayout());
@@ -228,5 +229,20 @@ public class AddHorseTab extends JPanel {
 
     public String getBreedComboBox() {
         return breedComboBox.getSelectedItem().toString();
+    }
+
+    
+    public void setWeatherCondition(String weather) {
+        this.currentWeather = weather;
+    }
+
+    public int getConfidenceSliderValue() {
+        return confidenceSlider.getValue();
+    }
+    public char getSymbolTextField() {
+        return horseSymbol.getSelectedItem().toString().charAt(0);
+    }
+    public JTextField getNameTextField() {
+        return horseNameField;
     }
 }

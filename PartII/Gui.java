@@ -15,6 +15,7 @@ public class Gui extends JFrame {
     private StatsTab statsTab;
     private BettingTab bettingTab;
     private AddHorseTab addHorseTab;
+    private String currentWeather = "Clear";
 
     public Gui() {
         setTitle("Race Track Simulator");
@@ -25,16 +26,18 @@ public class Gui extends JFrame {
         addHorseTab = new AddHorseTab();
         AddHorseTab addHorseTab = new AddHorseTab();
         statsTab = new StatsTab();
-        AdjustRaceTab adjustRaceTab = new AdjustRaceTab(); // Declare and initialize adjustRaceTab
+        AdjustRaceTab adjustRaceTab = new AdjustRaceTab();
         bettingTab = new BettingTab();
 
-        // Set up tabbed pane with larger minimum size
         tabbedPane.setMinimumSize(new Dimension(700, 500));
 
         adjustRaceTab.setOnRaceAdjusted((newRace, trackDetails) -> {
             this.race = newRace;
             race.setTrackShape(trackDetails[0]);
             race.setWeatherCondition(trackDetails[1]);
+            currentWeather = trackDetails[1];
+            addHorseTab.setWeatherCondition(currentWeather);
+
             addHorseTab.setRace(race);
             addHorseTab.setHorseStatsMap(horseStatsMap);
             statsTab.setHorseStatsMap(horseStatsMap);
@@ -46,6 +49,17 @@ public class Gui extends JFrame {
         });
         
         addHorseTab.setOnHorseAdded(() -> {
+            List<Horse> horses = addHorseTab.getHorses();
+            for (Horse horse : horses) {
+                switch (currentWeather) {
+                    case "Stormy" -> horse.setConfidence(horse.getConfidence() - 0.2);
+                    case "Rainy" -> horse.setConfidence(horse.getConfidence() - 0.1);
+                    case "Foggy" -> horse.setConfidence(horse.getConfidence() - 0.05);
+                    case "Sunny" -> horse.setConfidence(horse.getConfidence() + 0.1);
+                    case "Dry" -> horse.setConfidence(horse.getConfidence() + 0.075);
+                    case "Clear" -> horse.setConfidence(horse.getConfidence() + 0.05);
+                }
+            }
             statsTab.updateStats(race);
             bettingTab.refreshHorseList(); 
         });
@@ -58,7 +72,9 @@ public class Gui extends JFrame {
                 JOptionPane.showMessageDialog(this, "You must place a bet before starting the race!");
                 return;
             }
-            startRace(racePanel, onFinished, bettingTab.getSelectedHorseForBet(), bettingTab.getTotalBetAmount());
+            else if(bettingTab.hasPlacedBet()){
+                startRace(racePanel, onFinished, bettingTab.getSelectedHorseForBet(), bettingTab.getTotalBetAmount());
+            }
         });
 
         tabbedPane.addTab("Adjust Race", adjustRaceTab);
@@ -67,7 +83,7 @@ public class Gui extends JFrame {
         tabbedPane.addTab("Betting", bettingTab);
 
         add(tabbedPane, BorderLayout.CENTER);
-        setSize(750, 550);  // Increased size
+        setSize(750, 550);
         setLocationRelativeTo(null);
         setVisible(true);
     }
@@ -85,8 +101,7 @@ public class Gui extends JFrame {
         raceWindow.setSize(800, 600);
         raceWindow.setLocationRelativeTo(null);
         raceWindow.setVisible(true);
-    
-        // Add all horses from the AddHorseTab to the race
+
         List<Horse> horsesInRace = addHorseTab.getHorses();
         for (int i = 0; i < horsesInRace.size(); i++) {
             Horse horse = horsesInRace.get(i);
@@ -108,32 +123,42 @@ public class Gui extends JFrame {
                 SwingUtilities.invokeLater(() -> {
                     isRaceInProgress = false;
                     raceWindow.dispose();
-                    
-                    // Collect RaceResults for each horse
+
                     for (int lane = 0; lane < race.getLanes().size(); lane++) {
                         Horse horse = race.getLanes().get(lane);
                         if (horse != null) {
-                            boolean hasWon = horse.getDistanceTravelled() >= race.getRaceLength() && !horse.hasFallen();
-                            RaceResult result = new RaceResult(
+                                boolean hasWon = horse.getDistanceTravelled() >= race.getRaceLength() && !horse.hasFallen();
+        
+                                double baseSpeed = horse.getDistanceTravelled() / (double) race.getRaceLength();
+                                double equipmentSpeed = addHorseTab.SpeedModifier(
+                                    addHorseTab.getSaddleComboBox(),
+                                    addHorseTab.getHorseshoeComboBox(),
+                                    addHorseTab.getBreedComboBox()
+                                );
+        
+                                double totalSpeed = baseSpeed + equipmentSpeed;
+        
+                                if ("Dry".equalsIgnoreCase(race.getWeatherCondition())) {
+                                    totalSpeed += 0.1;
+                                }
+        
+                                RaceResult result = new RaceResult(
                                     race.getRaceLength(),
                                     hasWon,
                                     horse.hasFallen(),
-                                    horse.getDistanceTravelled() / (double) race.getRaceLength() + addHorseTab.SpeedModifier(addHorseTab.getSaddleComboBox(), addHorseTab.getHorseshoeComboBox(), addHorseTab.getBreedComboBox()),
+                                    totalSpeed,
                                     race.getTrackShape(),
                                     race.getWeatherCondition()
-                            );
+                                );
                             horseStatsMap.computeIfAbsent(horse, k -> new ArrayList<>()).add(result);
                         }
                     }
     
-                    // Update stats tab
                     statsTab.updateStats(race);
-    
-                    // Show race result
+
                     String winnerName = race.getWinner() != null ? race.getWinner().getName() : "No winner (all horses fell)";
                     JOptionPane.showMessageDialog(this, "The winner of the race is .... " + winnerName + "!");
-    
-                    // Notify betting tab
+
                     onFinished.accept(() -> {
                         bettingTab.notifyRaceFinished(race.getWinner(), race);
                     });
@@ -150,12 +175,11 @@ public class Gui extends JFrame {
     }
 }
 
-// RaceResult class remains unchanged
 class RaceResult {
     private final double time;
     private final boolean win;
     private final boolean fall;
-    private final double avgSpeed;
+    private double avgSpeed;
     private final String trackShape;
     private final String weatherCondition;
 
@@ -193,5 +217,8 @@ class RaceResult {
     }
     public double setSpeed(double speed) {
         return speed;
+    }
+    public void setAvgSpeed(double avgSpeed) {
+        this.avgSpeed = avgSpeed;
     }
 }

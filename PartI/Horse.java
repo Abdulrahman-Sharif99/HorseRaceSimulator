@@ -56,9 +56,8 @@ public class Horse {
         this.symbol = newSymbol;
     }
 
-    // Optional helper
-    public void increaseConfidence() {
-        setConfidence(confidence + 0.05);
+    public void increaseConfidence(double a) {
+        setConfidence(confidence + a);
     }
 
     public void setCoatColor(String coatColor) {

@@ -23,7 +23,7 @@ public class AdjustRaceTab extends JPanel {
         laneCountComboBox = new JComboBox<>();
         for (int i = 1; i <= 10; i++) laneCountComboBox.addItem(i);
 
-        weatherConditionComboBox = new JComboBox<>(new String[]{"Wet", "Dry", "Sunny"});
+        weatherConditionComboBox = new JComboBox<>(new String[]{"Clear","Foggy","Stormy","Rainy","Dry", "Sunny"});
         trackShapeComboBox = new JComboBox<>(new String[]{"Oval", "Figure-eight", "Straight"});
 
         adjustRaceButton = new JButton("Adjust Race");

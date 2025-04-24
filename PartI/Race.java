@@ -113,6 +113,7 @@ public class Race {
     public Horse getWinner() {
         for (Horse horse : lanes) {
             if (horse != null && horse.getDistanceTravelled() >= raceLength && !horse.hasFallen()) {
+                horse.increaseConfidence(0.2); 
                 return horse;
             }
         }
@@ -198,12 +199,21 @@ public class Race {
     }
 
     public int getNumberOfHorses() {
-        throw new UnsupportedOperationException("Unimplemented method 'getNumberOfHorses'");
+        int count = 0;
+        for (Horse horse : lanes) {
+            if (horse != null) count++;
+        }
+        return count;
     }
 
     public Object getLeadingHorse() {
-        // TODO Auto-generated method stub
-        throw new UnsupportedOperationException("Unimplemented method 'getLeadingHorse'");
+        Horse leadingHorse = null;
+        for (Horse horse : lanes) {
+            if (horse != null && (leadingHorse == null || horse.getDistanceTravelled() > leadingHorse.getDistanceTravelled())) {
+                leadingHorse = horse;
+            }
+        }
+        return leadingHorse;
     }
 
     // Add this method to the Race class
