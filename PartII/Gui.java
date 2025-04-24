@@ -58,6 +58,9 @@ public class Gui extends JFrame {
                     case "Sunny" -> horse.setConfidence(horse.getConfidence() + 0.1);
                     case "Dry" -> horse.setConfidence(horse.getConfidence() + 0.075);
                     case "Clear" -> horse.setConfidence(horse.getConfidence() + 0.05);
+                    case "Muddy" -> horse.setConfidence(horse.getConfidence() - 0.1);
+                    case "Icy" -> horse.setConfidence(horse.getConfidence() - 0.2);
+                    default -> horse.setConfidence(horse.getConfidence() + 0.00);
                 }
             }
             statsTab.updateStats(race);
@@ -140,6 +143,15 @@ public class Gui extends JFrame {
         
                                 if ("Dry".equalsIgnoreCase(race.getWeatherCondition())) {
                                     totalSpeed += 0.1;
+                                }
+                                else if("Muddy".equalsIgnoreCase(race.getWeatherCondition())){
+                                    totalSpeed -= 0.1;
+                                }
+                                else if("Icy".equalsIgnoreCase(race.getWeatherCondition())){
+                                    totalSpeed -= 0.2;
+                                }
+                                else if("Foggy".equalsIgnoreCase(race.getWeatherCondition())){
+                                    totalSpeed -= 0.05;
                                 }
         
                                 RaceResult result = new RaceResult(

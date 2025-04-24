@@ -216,8 +216,7 @@ public class Race {
         return leadingHorse;
     }
 
-    // Add this method to the Race class
     public int getLaneCount() {
-        return lanes.size(); // Assuming 'lanes' is a List or similar collection representing the race lanes
+        return lanes.size(); 
     }
 }
