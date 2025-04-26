@@ -12,11 +12,13 @@ public class RacePanel extends JPanel {
     private int panelHeight = 600;
     private int trackPadding = 60;
     private int laneWidth = 20;
-    private int totalTrackDistance = 100;
-    private String trackShape = "oval"; // default
+    private int totalTrackDistance;
+    private String trackShape = "oval";
     private Race race;
+    private int STEPS = 1000;
+    private int baseRadius = 200;
 
-    public RacePanel(Race r,List<Horse> horses) {
+    public RacePanel(Race r, List<Horse> horses) {
         this.race = r;
         this.horses = horses;
         setPreferredSize(new Dimension(panelWidth, panelHeight));
@@ -28,7 +30,7 @@ public class RacePanel extends JPanel {
         super.paintComponent(g);
         Graphics2D g2d = (Graphics2D) g;
 
-        drawRaceDetails(g2d); 
+        drawRaceDetails(g2d);
 
         switch (trackShape.toLowerCase()) {
             case "oval":
@@ -40,34 +42,23 @@ public class RacePanel extends JPanel {
                 drawHorsesStraight(g2d);
                 break;
             case "figure-eight":
-            case "figure-8":
-                drawStraightTrack(g2d);
-                drawHorsesStraight(g2d);
+                drawFigureEightTrack(g2d);
+                drawHorsesFigureEight(g2d);
                 break;
             default:
                 drawOvalTrack(g2d);
                 drawHorsesOval(g2d);
+                break;
         }
     }
 
     private void drawRaceDetails(Graphics2D g2d) {
         g2d.setColor(Color.BLACK);
         g2d.setFont(new Font("SansSerif", Font.BOLD, 16));
-
-        String details = "Weather Condition: " + race.getWeatherCondition() + " | Track: " + getTrackSymbol() + " | Shape: " + capitalize(trackShape) +
+        String details = "Weather Condition: " + race.getWeatherCondition() + " | Track: " + capitalize(trackShape) +
                          " | Horses: " + horses.size() +
                          " | Distance: " + totalTrackDistance + " units";
-
         g2d.drawString(details, 20, 25);
-    }
-
-    private String getTrackSymbol() {
-        switch (trackShape.toLowerCase()) {
-            case "oval": return "🏟️";
-            case "straight": return "||";
-            case "figure-8": return "||";
-            default: return "🛤️";
-        }
     }
 
     private String capitalize(String text) {
@@ -86,15 +77,9 @@ public class RacePanel extends JPanel {
             int h = panelHeight - 2 * inset;
             g2d.setColor(Color.WHITE);
             g2d.drawOval(inset, inset, w, h);
+            g2d.setColor(Color.BLACK);
+            g2d.drawString("🏁", inset, inset);
         }
-
-        g2d.setColor(Color.BLACK);
-        int outerInset = trackPadding;
-        int centerY = panelHeight / 2;
-        int x = panelWidth - outerInset - 10;
-        int y = centerY - (panelHeight - 2 * outerInset) / 2 - 10;
-        
-        g2d.drawString("🏁", x, y);
     }
 
     private void drawHorsesOval(Graphics2D g2d) {
@@ -108,7 +93,7 @@ public class RacePanel extends JPanel {
             int laneWidthOval = panelWidth - 2 * laneInset;
             int laneHeightOval = panelHeight - 2 * laneInset;
 
-            double distanceOffset = i * 2.5; 
+            double distanceOffset = i * 2.5;
             double progress = (horse.getDistanceTravelled() + distanceOffset) / (double) totalTrackDistance;
             progress = Math.min(progress, 1.0);
 
@@ -154,7 +139,95 @@ public class RacePanel extends JPanel {
         }
     }
 
+    private void drawFigureEightTrack(Graphics2D g2d) {
+        g2d.setColor(Color.LIGHT_GRAY);
+        g2d.fillRect(0, 0, getWidth(), getHeight());
 
+        int centerX = getWidth() / 2;
+        int centerY = getHeight() / 2;
+
+        // Draw multiple lanes for the figure-eight track
+        for (int lane = 0; lane < horses.size(); lane++) {
+            double laneOffset = lane * laneWidth * 0.5;
+
+            g2d.setColor(Color.BLACK);
+            for (int i = 0; i < STEPS - 1; i++) {
+                double angle1 = 2 * Math.PI * i / STEPS;
+                double angle2 = 2 * Math.PI * (i + 1) / STEPS;
+
+                int x1 = (int) ((Math.cos(angle1) * (baseRadius + laneOffset)) + centerX);
+                int y1 = (int) ((Math.sin(2 * angle1) * (baseRadius + laneOffset) / 2) + centerY);
+                int x2 = (int) ((Math.cos(angle2) * (baseRadius + laneOffset)) + centerX);
+                int y2 = (int) ((Math.sin(2 * angle2) * (baseRadius + laneOffset) / 2) + centerY);
+
+                g2d.drawLine(x1, y1, x2, y2);
+            }
+        }
+    }
+
+    private void drawHorsesFigureEight(Graphics2D g2d) {
+        int centerX = getWidth() / 2;
+        int centerY = getHeight() / 2;
+    
+        for (int i = 0; i < horses.size(); i++) {
+            Horse horse = horses.get(i);
+
+            double progress = horse.getDistanceTravelled() / (double) totalTrackDistance;
+            progress = Math.min(progress, 1.0);
+            
+            if (progress == 0.0) {
+                progress += 0.0001;
+            } else if (progress == 0.5) {
+                progress += 0.0001;
+            } else if (progress == 1.0) {
+                progress -= 0.0001;
+            }
+
+
+            int lane;
+            double adjustedProgress;
+            if (progress < 0.5) {
+                lane = i; 
+                adjustedProgress = progress * 2;
+            } else {
+                lane = horses.size() - 1 - i; 
+                adjustedProgress = (progress - 0.5) * 2;
+            }
+    
+            double laneOffset = lane * laneWidth * 0.5;
+
+            double angle = 2 * Math.PI * adjustedProgress;
+
+            double xBase = Math.cos(angle);
+            double yBase = Math.sin(2 * angle) / 2.0;
+
+            double xPath = xBase * (baseRadius + laneOffset);
+            double yPath = yBase * (baseRadius + laneOffset);
+
+            double dx_dphi = -Math.sin(angle);
+            double dy_dphi = Math.cos(2 * angle);
+    
+            double magnitude = Math.sqrt(dx_dphi * dx_dphi + dy_dphi * dy_dphi);
+    
+            double offsetX = (laneOffset / 2) * (dy_dphi / magnitude);
+            double offsetY = (laneOffset / 2) * (-dx_dphi / magnitude);
+
+            int x = (int) (centerX + xPath + offsetX);
+            int y = (int) (centerY + yPath + offsetY);
+
+            x = Math.max(trackPadding, Math.min(panelWidth - trackPadding, x));
+            y = Math.max(trackPadding, Math.min(panelHeight - trackPadding, y));
+    
+            Color color = getColorFromCoat(horse.getCoatColor());
+            g2d.setColor(color);
+            g2d.fillOval(x - 4, y - 4, 8, 8);
+    
+            g2d.setColor(Color.BLACK);
+            g2d.drawString(String.valueOf(horse.getSymbol()), x - 3, y - 6);
+        }
+    }
+    
+    
     private Color getColorFromCoat(String coat) {
         if (coat == null) return Color.BLACK;
         switch (coat.toLowerCase()) {
@@ -179,5 +252,9 @@ public class RacePanel extends JPanel {
     public void setTrackShape(String trackShape) {
         this.trackShape = trackShape;
         repaint();
+    }
+
+    public void setTrackLength(int length) {
+        this.totalTrackDistance = length;
     }
 }

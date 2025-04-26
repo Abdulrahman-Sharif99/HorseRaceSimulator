@@ -60,8 +60,8 @@ public class AdjustRaceTab extends JPanel {
         this.onRaceAdjusted = callback;
     }
 
-    public String getRaceTrack(){
-        return (String) trackShapeComboBox.getSelectedItem();
+    public int getRacelength(){
+        return (int) raceLengthSpinner.getValue();
     }
 
     public String getTrackShape() {
