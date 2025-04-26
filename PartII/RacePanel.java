@@ -93,8 +93,7 @@ public class RacePanel extends JPanel {
             int laneWidthOval = panelWidth - 2 * laneInset;
             int laneHeightOval = panelHeight - 2 * laneInset;
 
-            double distanceOffset = i * 2.5;
-            double progress = (horse.getDistanceTravelled() + distanceOffset) / (double) totalTrackDistance;
+            double progress = (horse.getDistanceTravelled() %totalTrackDistance) / (double) totalTrackDistance;
             progress = Math.min(progress, 1.0);
 
             double angle = 2 * Math.PI * progress;
@@ -105,12 +104,17 @@ public class RacePanel extends JPanel {
             int x = (int) (centerX + xRadius * Math.cos(angle));
             int y = (int) (centerY + yRadius * Math.sin(angle));
 
-            Color color = getColorFromCoat(horse.getCoatColor());
-            g2d.setColor(color);
-            g2d.fillOval(x - 4, y - 4, 8, 8);
-
-            g2d.setColor(Color.BLACK);
-            g2d.drawString(String.valueOf(horse.getSymbol()), x - 3, y - 6);
+            if (horse.hasFallen()) {
+                g2d.setColor(Color.RED);
+                g2d.drawString("X", x - 3, y - 6);
+            }
+            else{
+                Color color = getColorFromCoat(horse.getCoatColor());
+                g2d.setColor(color);
+                g2d.fillOval(x - 4, y - 4, 8, 8);
+                g2d.setColor(Color.BLACK);
+                g2d.drawString(String.valueOf(horse.getSymbol()), x - 3, y - 6);
+            }
         }
     }
 
@@ -131,39 +135,47 @@ public class RacePanel extends JPanel {
             int x = 50 + (int) ((panelWidth - 100) * horse.getDistanceTravelled() / totalTrackDistance);
             int y = 50 + i * 40;
 
-            Color color = getColorFromCoat(horse.getCoatColor());
-            g2d.setColor(color);
-            g2d.fillOval(x, y, 20, 20);
-            g2d.setColor(Color.BLACK);
-            g2d.drawString(String.valueOf(horse.getSymbol()), x + 5, y - 5);
+            if (horse.hasFallen()) {
+                g2d.setColor(Color.RED);
+                g2d.drawString("X", x + 5, y - 5);
+            } else {
+                Color color = getColorFromCoat(horse.getCoatColor());
+                g2d.setColor(color);
+                g2d.fillOval(x, y, 20, 20);
+                g2d.setColor(Color.BLACK);
+                g2d.drawString(String.valueOf(horse.getSymbol()), x + 5, y - 5);
+            }
         }
     }
 
     private void drawFigureEightTrack(Graphics2D g2d) {
-        g2d.setColor(Color.LIGHT_GRAY);
+        g2d.setColor(Color.WHITE);
         g2d.fillRect(0, 0, getWidth(), getHeight());
-
+    
         int centerX = getWidth() / 2;
         int centerY = getHeight() / 2;
-
-        // Draw multiple lanes for the figure-eight track
+    
         for (int lane = 0; lane < horses.size(); lane++) {
             double laneOffset = lane * laneWidth * 0.5;
-
+    
             g2d.setColor(Color.BLACK);
             for (int i = 0; i < STEPS - 1; i++) {
                 double angle1 = 2 * Math.PI * i / STEPS;
                 double angle2 = 2 * Math.PI * (i + 1) / STEPS;
-
+    
                 int x1 = (int) ((Math.cos(angle1) * (baseRadius + laneOffset)) + centerX);
                 int y1 = (int) ((Math.sin(2 * angle1) * (baseRadius + laneOffset) / 2) + centerY);
                 int x2 = (int) ((Math.cos(angle2) * (baseRadius + laneOffset)) + centerX);
                 int y2 = (int) ((Math.sin(2 * angle2) * (baseRadius + laneOffset) / 2) + centerY);
-
+    
                 g2d.drawLine(x1, y1, x2, y2);
             }
         }
+    
+        g2d.setFont(new Font("SansSerif", Font.BOLD, 20));
+        g2d.drawString("🏁", centerX - 10, centerY + 11);
     }
+    
 
     private void drawHorsesFigureEight(Graphics2D g2d) {
         int centerX = getWidth() / 2;
@@ -171,39 +183,50 @@ public class RacePanel extends JPanel {
     
         for (int i = 0; i < horses.size(); i++) {
             Horse horse = horses.get(i);
-
-            double progress = horse.getDistanceTravelled() / (double) totalTrackDistance;
+    
+            double progress = (horse.getDistanceTravelled() % totalTrackDistance) / (double) totalTrackDistance;
             progress = Math.min(progress, 1.0);
-            
+    
             if (progress == 0.0) {
-                progress += 0.0001;
-            } else if (progress == 0.5) {
+                if (horse.hasFallen()) {
+                    g2d.setColor(Color.RED);
+                    g2d.drawString("X", centerX - 3, centerY - 3);
+                } else {
+                    Color color = getColorFromCoat(horse.getCoatColor());
+                    g2d.setColor(color);
+                    g2d.fillOval(centerX - 4, centerY - 4, 8, 8);
+                    g2d.setColor(Color.BLACK);
+                    g2d.drawString(String.valueOf(horse.getSymbol()), centerX - 3, centerY - 6);
+                }
+                continue;
+            }
+    
+            if (progress == 0.5) {
                 progress += 0.0001;
             } else if (progress == 1.0) {
                 progress -= 0.0001;
             }
-
-
+    
             int lane;
             double adjustedProgress;
             if (progress < 0.5) {
-                lane = i; 
+                lane = i;
                 adjustedProgress = progress * 2;
             } else {
-                lane = horses.size() - 1 - i; 
+                lane = horses.size() - 1 - i;
                 adjustedProgress = (progress - 0.5) * 2;
             }
     
             double laneOffset = lane * laneWidth * 0.5;
-
+    
             double angle = 2 * Math.PI * adjustedProgress;
-
+    
             double xBase = Math.cos(angle);
             double yBase = Math.sin(2 * angle) / 2.0;
-
+    
             double xPath = xBase * (baseRadius + laneOffset);
             double yPath = yBase * (baseRadius + laneOffset);
-
+    
             double dx_dphi = -Math.sin(angle);
             double dy_dphi = Math.cos(2 * angle);
     
@@ -211,21 +234,26 @@ public class RacePanel extends JPanel {
     
             double offsetX = (laneOffset / 2) * (dy_dphi / magnitude);
             double offsetY = (laneOffset / 2) * (-dx_dphi / magnitude);
-
+    
             int x = (int) (centerX + xPath + offsetX);
             int y = (int) (centerY + yPath + offsetY);
-
+    
             x = Math.max(trackPadding, Math.min(panelWidth - trackPadding, x));
             y = Math.max(trackPadding, Math.min(panelHeight - trackPadding, y));
     
-            Color color = getColorFromCoat(horse.getCoatColor());
-            g2d.setColor(color);
-            g2d.fillOval(x - 4, y - 4, 8, 8);
-    
-            g2d.setColor(Color.BLACK);
-            g2d.drawString(String.valueOf(horse.getSymbol()), x - 3, y - 6);
+            if (horse.hasFallen()) {
+                g2d.setColor(Color.RED);
+                g2d.drawString("X", x - 3, y - 3);
+            } else {
+                Color color = getColorFromCoat(horse.getCoatColor());
+                g2d.setColor(color);
+                g2d.fillOval(x - 4, y - 4, 8, 8);
+                g2d.setColor(Color.BLACK);
+                g2d.drawString(String.valueOf(horse.getSymbol()), x - 3, y - 6);
+            }
         }
     }
+    
     
     
     private Color getColorFromCoat(String coat) {
@@ -256,5 +284,9 @@ public class RacePanel extends JPanel {
 
     public void setTrackLength(int length) {
         this.totalTrackDistance = length;
+    }
+    public void resetRace(List<Horse> newHorses) {
+        this.horses = newHorses;
+        repaint();
     }
 }

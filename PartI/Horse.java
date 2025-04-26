@@ -11,7 +11,7 @@ public class Horse {
     public Horse(char horseSymbol, String horseName, double horseConfidence) {
         this.symbol = horseSymbol;
         this.name = horseName;
-        setConfidence(horseConfidence); // Validation included
+        setConfidence(horseConfidence);
     }
 
     public void fall() {
@@ -49,7 +49,15 @@ public class Horse {
     }
 
     public void setConfidence(double newConfidence) {
-        this.confidence = Math.min(Math.max(newConfidence, 0), 1);
+        if(0<=newConfidence && newConfidence<=1){
+            this.confidence = newConfidence;
+        }
+        else if(newConfidence>1){
+            this.confidence = 1;
+        }
+        else{
+            this.confidence = 0;
+        }
     }
 
     public void setSymbol(char newSymbol) {
@@ -75,4 +83,3 @@ public class Horse {
         return breed;
     }
 }
-

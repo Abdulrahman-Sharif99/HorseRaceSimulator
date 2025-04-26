@@ -94,11 +94,10 @@ public class Gui extends JFrame {
         setVisible(true);
     }
 
-    private void startRace(RacePanel racePanel, Consumer<Runnable> onFinished, Horse selectedHorse, double totalBetAmount) {
+    private void startRace(RacePanel racePanel, Consumer<Runnable> onFinished, Horse selectedHorse, double totalBetAmount){
         if (isRaceInProgress) {
             return;
         }
-
         racePanel.setTrackLength(racelength);
         racePanel.setTrackShape(currenttrackshape);
         isRaceInProgress = true;
@@ -175,8 +174,10 @@ public class Gui extends JFrame {
 
                     String winnerName = race.getWinner() != null ? race.getWinner().getName() : "No winner (all horses fell)";
                     JOptionPane.showMessageDialog(this, "The winner of the race is .... " + winnerName + "!");
+                    addHorseTab.setBetPlaced(false);
 
                     onFinished.accept(() -> {
+                        addHorseTab.setBetPlaced(false);
                         bettingTab.notifyRaceFinished(race.getWinner(), race);
                     });
                 });
