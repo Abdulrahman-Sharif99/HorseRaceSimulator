@@ -10,31 +10,20 @@ Running GUi:
 3) Run GUI: java PartII.Gui
 
 Using GUI:
-1)Adjust Race Settings:
+1) Adjust Race Settings:
     -Go to Adjust Race Tab
-    -Set:
-         -Race length
-         -Number of lanes
-         -Weather Condition
-         -Track shape
+    -Set:Race length, Number of lanes, Weather Condition and Track shape
     -Click "Adjust Race" button to confirm.
-2) Add Horses:
+3) Add Horses:
     -Switch to the "Add Horse" tab.
-    -Enter:
-        -Horse name
-        -Symbol (♘, ♞, etc.)
-        -Breed
-        -coat color
-        -equipment
-        -Confidence level (via slider)
-        -Lane number
+    -Enter:Horse name, Symbol (♘, ♞, etc.), Breed, coat color, equipment, Confidence level (via slider), Lane number
     -Click "Add Horse" to register each horse.
-3) Place Bet:
+4) Place Bet:
     -Switch to "Betting" tab
     -Select horse
     -Place a minimum bet of £5.00
     -Click "Place Bet" button to cofirm bet.
-4)Start the Race:
+5) Start the Race:
     -Return to the "Add Horse" tab.
     -Click "Start Race" at the bottom.
     -Watch the race unfold in a new window!
